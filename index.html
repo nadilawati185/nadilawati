@@ -1,25 +1,158 @@
-import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set, push, onValue, remove } from "firebase/database";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORDER DN IKK - Indah Kiat Karawang</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAEZA47N7205zjQEKT2iSViQJvCwLEzusg",
-  authDomain: "dn-ikk.firebaseapp.com",
-  databaseURL: "https://dn-ikk-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "dn-ikk",
-  storageBucket: "dn-ikk.firebasestorage.app",
-  messagingSenderId: "121412700238",
-  appId: "1:121412700238:web:598d91bcebc6976a615b1f"
-[span_1](start_span)};[span_1](end_span)
+        [span_1](start_span)// Firebase Configuration[span_1](end_span)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAEZA47N7205zjQEKT2iSViQJvCwLEzusg",
+            authDomain: "dn-ikk.firebaseapp.com",
+            databaseURL: "https://dn-ikk-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "dn-ikk",
+            storageBucket: "dn-ikk.firebasestorage.app",
+            messagingSenderId: "121412700238",
+            appId: "1:121412700238:web:598d91bcebc6976a615b1f"
+        };
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-// Example Function to Add Order
-export const addOrder = (orderData) => {
-  const orderRef = ref(db, 'orders/');
-  return push(orderRef, {
-    ...orderData,
-    createdBy: localStorage.getItem('user_name'),
-    timestamp: new Date().toISOString()
-  });
-};
+        // --- AUTHENTICATION LOGIC ---
+        window.login = function() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const creator = document.getElementById('createdByInput').value;
+
+            if(user === "IKK" && pass === "123" && creator !== "") {
+                sessionStorage.setItem("user", creator);
+                document.getElementById('loginPage').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                loadDashboard();
+            } else {
+                alert("Please fill all fields correctly!");
+            }
+        }
+
+        [span_2](start_span)// --- ROUNDING LOGIC[span_2](end_span) ---
+        function roundDNTarget(val) {
+            let lastDigit = val % 10;
+            let base = Math.floor(val / 10) * 10;
+            if (lastDigit >= 3) return base + 5;
+            return base;
+        }
+
+        // --- CRUD OPERATIONS ---
+        window.addOrder = function() {
+            const customer = document.getElementById('custSelect').value;
+            const dest = document.getElementById('destInput').value;
+            const bu = document.getElementById('buSelect').value;
+            const rawTarget = parseInt(document.getElementById('targetInput').value);
+            
+            const newData = {
+                customer,
+                destination: dest,
+                buType: bu,
+                targetDN: roundDNTarget(rawTarget),
+                date: document.getElementById('orderDate').value,
+                createdBy: sessionStorage.getItem("user")
+            };
+
+            // Save to Firebase & LocalStorage (Offline support)
+            push(ref(db, 'orders/'), newData);
+            localStorage.setItem('last_order', JSON.stringify(newData));
+            alert("Order Added & Auto-Saved!");
+        }
+
+        // --- EXPORT FUNCTION (Example PDF) ---
+        window.downloadPDF = function() {
+            window.print(); // Browser print includes "Created By" footer
+        }
+    </script>
+    <style>
+        @media print {
+            .no-print { display: none; }
+            .print-footer { position: fixed; bottom: 0; width: 100%; text-align: center; }
+        }
+        .theme-bright { background-color: #f0f9ff; color: #1e3a8a; }
+    </style>
+</head>
+<body class="theme-bright font-sans">
+
+    <div id="loginPage" class="flex flex-col items-center justify-center h-screen space-y-4">
+        <h1 class="text-3xl font-bold text-blue-800">ORDER DN IKK</h1>
+        <div class="bg-white p-8 rounded-lg shadow-xl w-96">
+            <input id="username" type="text" placeholder="Username (IKK)" class="w-full border p-2 mb-2 rounded">
+            <input id="password" type="password" placeholder="Password (123)" class="w-full border p-2 mb-2 rounded">
+            <input id="createdByInput" type="text" placeholder="Your Name (Wajib)" class="w-full border p-2 mb-4 rounded border-red-500">
+            <button onclick="login()" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">Login</button>
+        </div>
+    </div>
+
+    <div id="mainApp" class="hidden p-6">
+        <header class="flex justify-between items-center mb-6 border-b pb-4">
+            <h2 class="text-2xl font-bold">DASHBOARD - INDAH KIAT KARAWANG</h2>
+            <div class="space-x-2 no-print">
+                <button onclick="downloadPDF()" class="bg-green-600 text-white px-4 py-2 rounded">Download PDF/Print</button>
+                <button class="bg-gray-200 px-4 py-2 rounded">Settings (Themes/Lang)</button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white p-4 rounded shadow">
+                <h3 class="font-bold mb-4">Add New Order</h3>
+                <input type="date" id="orderDate" class="w-full border p-2 mb-2">
+                <select id="custSelect" class="w-full border p-2 mb-2">
+                    <option>KREASI KOTAKMEGAH, PT (GD)</option>
+                    <option>OJI SINARMAS PACKAGING</option>
+                </select>
+                <input type="text" id="destInput" placeholder="Destination" class="w-full border p-2 mb-2">
+                <select id="buSelect" class="w-full border p-2 mb-2">
+                    <option value="BU 17">BU 17</option>
+                    <option value="CMI">CMI</option>
+                </select>
+                <input type="number" id="targetInput" placeholder="DN Target (MT)" class="w-full border p-2 mb-4">
+                <button onclick="addOrder()" class="w-full bg-blue-600 text-white py-2 rounded">Add Order</button>
+            </div>
+
+            <div class="md:col-span-2 bg-white p-4 rounded shadow overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-blue-100">
+                            <th class="p-2 border">Customer</th>
+                            <th class="p-2 border">Destination</th>
+                            <th class="p-2 border">BU</th>
+                            <th class="p-2 border">Target (MT)</th>
+                            <th class="p-2 border">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderList">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="mt-8 bg-white p-6 rounded shadow no-print">
+            <h3 class="font-bold mb-4">Top Customer Analysis (Monthly)</h3>
+            <canvas id="orderChart" height="100"></canvas>
+        </div>
+
+        <div class="print-footer hidden show-on-print mt-10 text-sm italic">
+            Document generated by: <span id="footerCreator"></span> | INDAH KIAT KARAWANG
+        </div>
+    </div>
+
+    <script>
+        // Update footer creator name
+        setInterval(() => {
+            document.getElementById('footerCreator').innerText = sessionStorage.getItem("user") || "";
+        }, 1000);
+    </script>
+</body>
+</html>
