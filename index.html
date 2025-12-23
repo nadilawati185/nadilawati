@@ -1,0 +1,25 @@
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, set, push, onValue, remove } from "firebase/database";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAEZA47N7205zjQEKT2iSViQJvCwLEzusg",
+  authDomain: "dn-ikk.firebaseapp.com",
+  databaseURL: "https://dn-ikk-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "dn-ikk",
+  storageBucket: "dn-ikk.firebasestorage.app",
+  messagingSenderId: "121412700238",
+  appId: "1:121412700238:web:598d91bcebc6976a615b1f"
+[span_1](start_span)};[span_1](end_span)
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// Example Function to Add Order
+export const addOrder = (orderData) => {
+  const orderRef = ref(db, 'orders/');
+  return push(orderRef, {
+    ...orderData,
+    createdBy: localStorage.getItem('user_name'),
+    timestamp: new Date().toISOString()
+  });
+};
