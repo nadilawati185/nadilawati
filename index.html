@@ -156,3 +156,115 @@
     </script>
 </body>
 </html>
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+[span_2](start_span)// Firebase Configuration[span_2](end_span)
+const firebaseConfig = {
+  apiKey: "AIzaSyAEZA47N7205zjQEKT2iSViQJvCwLEzusg",
+  authDomain: "dn-ikk.firebaseapp.com",
+  databaseURL: "https://dn-ikk-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "dn-ikk",
+  storageBucket: "dn-ikk.firebasestorage.app",
+  messagingSenderId: "121412700238",
+  appId: "1:121412700238:web:598d91bcebc6976a615b1f"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// Logic: Rounding DN Target
+// If ends in 3,4 -> 25. If 0,1,2 -> 20.
+function calculateTarget(val) {
+    const lastDigit = val % 10;
+    const base = Math.floor(val / 10) * 10;
+    return (lastDigit >= 3) ? base + 5 : base;
+}
+
+// Global CRUD Functions
+window.addOrder = function() {
+    const customer = document.getElementById('custName').value;
+    const dest = document.getElementById('destination').value;
+    const buType = document.getElementById('buType').value;
+    const rawVal = parseInt(document.getElementById('dnInput').value);
+    const createdBy = sessionStorage.getItem("createdBy");
+
+    const orderData = {
+        customer,
+        destination: dest,
+        buType,
+        targetDN: calculateTarget(rawVal),
+        date: document.getElementById('orderDate').value,
+        createdBy: createdBy,
+        timestamp: new Date().toISOString()
+    };
+
+    // Save to Firebase & LocalStorage (Offline Mode)
+    push(ref(db, 'orders/'), orderData);
+    localStorage.setItem('last_entry', JSON.stringify(orderData));
+    alert("Order Saved Successfully!");
+};
+
+// Email Integration (Outlook/Gmail)
+window.sendEmail = function() {
+    const creator = sessionStorage.getItem("createdBy");
+    const date = document.getElementById('orderDate').value;
+    const subject = `UPDATE DN DATE ${date}`;
+    const body = `Dear Team,\n\nAttached update Create DN has been made by ${creator}.\n\nMohon dibantu terlampir update DN telah dibuat.`;
+    
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+};
+:root {
+    --primary: #1e40af; /* Blue Business */
+    --bg-color: #f8fafc;
+    --text-color: #1e293b;
+}
+
+/* Theme Cherry / Cute */
+body.theme-cherry {
+    --primary: #db2777;
+    --bg-color: #fff1f2;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Inter', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.calendar-red { color: #ef4444; font-weight: bold; } /* Weekend/Holiday */
+
+.dashboard-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    padding: 1.5rem;
+}
+
+@media print {
+    .no-print { display: none; }
+    .print-preview-table { width: 100%; border: 1px solid black; }
+    .footer-tracker { display: block; position: fixed; bottom: 0; text-align: center; }
+}
+
+.loading-fast { animation: pulse 0.5s infinite; }
+{
+  "short_name": "DN-IKK",
+  "name": "Order DN Indah Kiat Karawang",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "./index.html",
+  "display": "standalone",
+  "theme_color": "#1e40af",
+  "background_color": "#ffffff"
+}
+<link rel="stylesheet" href="style.css">
+​<link rel="manifest" href="manifest.json">
+​<script type="module" src="script.js"></script>
